@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}2D Visualization · nanozyme-lite{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h5 mb-0">2D Visualization</h1>
+    <div class="d-flex gap-2">
+      <form class="d-flex" method="get" action="">
+        <input class="form-control form-control-sm me-2" type="text" name="q" value="{{ q or '' }}" placeholder="Search title/tags/notes">
+        <button class="btn btn-outline-secondary btn-sm" type="submit">Search</button>
+      </form>
+      <a class="btn btn-primary btn-sm" href="{{ url_for('visual2d.create_view') }}">New</a>
+    </div>
+  </div>
+
+  {% if items %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+    {% for it in items %}
+    <div class="col">
+      <div class="card h-100 shadow-sm">
+        {% if it.image_filename %}
+        <img class="card-img-top" alt="{{ it.title }}"
+             src="{{ url_for('static', filename='plots/' ~ it.image_filename) }}">
+        {% else %}
+        <div class="ratio ratio-16x9 bg-light d-flex align-items-center justify-content-center">
+          <div class="text-muted">No image</div>
+        </div>
+        {% endif %}
+        <div class="card-body">
+          <div class="d-flex align-items-start justify-content-between">
+            <h5 class="card-title me-2">{{ it.title }}</h5>
+            {% if it.kind %}<span class="badge bg-light text-dark">{{ it.kind }}</span>{% endif %}
+          </div>
+          {% if it.tags %}
+          <div class="small text-muted mb-2">{{ it.tags }}</div>
+          {% endif %}
+          {% if it.notes %}
+          <p class="card-text small text-truncate">{{ it.notes }}</p>
+          {% endif %}
+        </div>
+        <div class="card-footer d-flex gap-2">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('visual2d.detail_view', item_id=it.id) }}">View</a>
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('visual2d.edit_view', item_id=it.id) }}">Edit</a>
+          <form method="post" action="{{ url_for('visual2d.delete_view', item_id=it.id) }}" onsubmit="return confirm('Delete this item?');">
+            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="alert alert-light border">No items.</div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}2D · {{ it.title }} · nanozyme-lite{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h5 mb-0">{{ it.title }}</h1>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('visual2d.edit_view', item_id=it.id) }}">Edit</a>
+      <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('visual2d.list_view') }}">Back</a>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-body">
+          {% if it.image_filename %}
+            {% if it.image_filename.endswith('.pdf') %}
+              <div class="ratio ratio-16x9">
+                <iframe src="{{ url_for('static', filename='plots/' ~ it.image_filename) }}" style="border:0;"></iframe>
+              </div>
+            {% else %}
+              <img class="img-fluid rounded" alt="{{ it.title }}"
+                   src="{{ url_for('static', filename='plots/' ~ it.image_filename) }}">
+            {% endif %}
+          {% else %}
+            <div class="ratio ratio-16x9 bg-light d-flex align-items-center justify-content-center">
+              <div class="text-muted">No image</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-body">
+          <div class="mb-2"><span class="text-muted">Kind:</span> {{ it.kind or '—' }}</div>
+          <div class="mb-2"><span class="text-muted">Tags:</span> {{ it.tags or '—' }}</div>
+          <div class="mb-2"><span class="text-muted">Created:</span> {{ it.created_at or '—' }}</div>
+          <div class="mb-3"><span class="text-muted">Updated:</span> {{ it.updated_at or '—' }}</div>
+          {% if it.config_json %}
+          <div class="mb-2">
+            <div class="text-muted">Config JSON:</div>
+            <pre class="small" style="white-space:pre-wrap">{{ it.config_json }}</pre>
+          </div>
+          {% endif %}
+          {% if it.notes %}
+          <div class="mb-2">
+            <div class="text-muted">Notes:</div>
+            <div class="small">{{ it.notes }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <form class="mt-3" method="post" action="{{ url_for('visual2d.delete_view', item_id=it.id) }}" onsubmit="return confirm('Delete this item?');">
+        <button class="btn btn-outline-danger w-100" type="submit">Delete</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

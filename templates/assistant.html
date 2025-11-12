@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Assistant · nanozyme-lite{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="assistant-hero mb-4">
+        <div>
+          <p class="eyebrow text-uppercase mb-1">Nanozyme co-pilot</p>
+          <h1 class="h3 mb-2">Ask anything about catalysts, datasets, or workflows.</h1>
+          <p class="text-muted mb-0">Powered by DeepSeek chat completions. Questions never leave the backend, so your API key stays safe.</p>
+        </div>
+        <div class="badge bg-success-subtle text-success-emphasis">Live</div>
+      </div>
+      {% if not api_ready %}
+      <div class="alert alert-warning" role="alert">
+        Assistant backend is not fully configured. Make sure <code>DEEPSEEK_API_KEY</code> is set before asking questions.
+      </div>
+      {% endif %}
+
+      <div class="card chat-panel shadow-sm">
+        <div class="card-body">
+          <div id="assistant-feed" class="chat-feed">
+            <div class="chat-empty text-muted">No conversation yet — submit your first question.</div>
+          </div>
+        </div>
+        <div class="card-footer bg-white">
+          <form id="assistant-form" class="d-flex flex-column gap-3">
+            <textarea id="assistant-question" class="form-control" rows="3" placeholder="e.g., Summarize the Km ranges for POD nanozymes near physiological pH." required></textarea>
+            <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
+              <small id="assistant-status" class="text-muted">Model: deepseek-chat · temp 0.2</small>
+              <button id="assistant-submit" class="btn btn-primary" {% if not api_ready %}disabled{% endif %}>Send</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block body_extra %}
+<script>
+(function(){
+  const form = document.getElementById("assistant-form");
+  const textarea = document.getElementById("assistant-question");
+  const feed = document.getElementById("assistant-feed");
+  const statusEl = document.getElementById("assistant-status");
+  const submitBtn = document.getElementById("assistant-submit");
+
+  function addMessage(role, text){
+    const wrapper = document.createElement("div");
+    wrapper.className = `chat-message chat-message--${role}`;
+    const avatar = document.createElement("div");
+    avatar.className = "chat-avatar";
+    avatar.textContent = role === "user" ? "You" : "AI";
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble";
+    bubble.innerHTML = text.replace(/\n/g, "<br>");
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(bubble);
+    feed.appendChild(wrapper);
+    feed.querySelector(".chat-empty")?.remove();
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  async function handleSubmit(event){
+    event.preventDefault();
+    const question = textarea.value.trim();
+    if(!question){ return; }
+    addMessage("user", question);
+    textarea.value = "";
+    submitBtn.disabled = true;
+    statusEl.textContent = "Thinking...";
+
+    try{
+      const resp = await fetch("/assistant/api", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+      const data = await resp.json();
+      if(resp.ok){
+        addMessage("assistant", data.answer || "No response.");
+        const usage = data.usage || {};
+        statusEl.textContent = `Tokens · prompt ${usage.prompt_tokens || 0} / completion ${usage.completion_tokens || 0}`;
+      }else{
+        addMessage("assistant", `<span class="text-danger">Error:</span> ${data.error || "Request failed."}`);
+        statusEl.textContent = "Error encountered.";
+      }
+    }catch(err){
+      addMessage("assistant", `<span class="text-danger">Network error:</span> ${err}`);
+      statusEl.textContent = "Network error.";
+    }finally{
+      submitBtn.disabled = false;
+    }
+  }
+
+  form.addEventListener("submit", handleSubmit);
+})();
+</script>
+
+<style>
+  .assistant-hero{
+    background: linear-gradient(135deg, rgba(59,130,246,.12), rgba(79,70,229,.18));
+    border-radius: 18px;
+    padding: 24px 28px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+  }
+  .chat-panel{
+    border-radius: 20px;
+    overflow:hidden;
+  }
+  .chat-feed{
+    max-height: 420px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .chat-message{
+    display:flex;
+    gap:12px;
+  }
+  .chat-message--assistant .chat-bubble{
+    background:#f1f5f9;
+    color:#0f172a;
+  }
+  .chat-message--user{
+    flex-direction:row-reverse;
+  }
+  .chat-message--user .chat-bubble{
+    background:#2563eb;
+    color:#fff;
+  }
+  .chat-avatar{
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:#e2e8f0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:600;
+    color:#0f172a;
+  }
+  .chat-message--user .chat-avatar{
+    background:#1d4ed8;
+    color:#fff;
+  }
+  .chat-bubble{
+    padding:14px 16px;
+    border-radius:16px;
+    max-width:80%;
+    font-size:.95rem;
+    box-shadow:0 4px 12px rgba(15,23,42,.08);
+  }
+  .chat-empty{
+    text-align:center;
+    padding:40px 0;
+  }
+  @media (max-width: 767px){
+    .assistant-hero{
+      flex-direction:column;
+      text-align:center;
+    }
+    .chat-bubble{
+      max-width:100%;
+    }
+  }
+</style>
+{% endblock %}

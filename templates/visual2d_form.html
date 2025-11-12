@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'New' if not it else 'Edit' }} 2D · nanozyme-lite{% endblock %}
+
+{% block content %}
+<section class="container py-4" style="max-width: 880px;">
+  <h1 class="h5 mb-3">{{ 'New' if not it else 'Edit' }} 2D Visualization</h1>
+
+  <form method="post" enctype="multipart/form-data" class="card">
+    <div class="card-body">
+      <div class="mb-3">
+        <label class="form-label">Title <span class="text-danger">*</span></label>
+        <input class="form-control" type="text" name="title" value="{{ it.title if it else '' }}" required>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Kind</label>
+          <select class="form-select" name="kind">
+            {% set kinds = ['scatter','violin','box','bar','heatmap','line','other'] %}
+            <option value="">—</option>
+            {% for k in kinds %}
+            <option value="{{ k }}" {% if it and it.kind==k %}selected{% endif %}>{{ k }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">Tags</label>
+          <input class="form-control" type="text" name="tags" value="{{ it.tags if it else '' }}" placeholder="comma separated">
+        </div>
+      </div>
+
+      <div class="mb-3 mt-3">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" name="notes" rows="3">{{ it.notes if it else '' }}</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Config (JSON)</label>
+        <textarea class="form-control" name="config_json" rows="5" placeholder='{"x":"ph","y":"km","filter":{"activity":"POD"}}'>{{ it.config_json if it else '' }}</textarea>
+        <div class="form-text">Optional future config for dynamic plots.</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Image (png/jpg/svg/pdf)</label>
+        <input class="form-control" type="file" name="image" accept=".png,.jpg,.jpeg,.svg,.pdf">
+        {% if it and it.image_filename %}
+        <div class="form-text">Current: {{ it.image_filename }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card-footer d-flex gap-2">
+      <button class="btn btn-primary" type="submit">{{ 'Create' if not it else 'Save' }}</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('visual2d.list_view') }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

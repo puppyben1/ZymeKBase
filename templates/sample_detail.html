@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Sample #{{ it.id }} · nanozyme-lite{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <a class="btn btn-outline-secondary btn-sm mb-3" href="{{ url_for('database.list_view') }}">← Back</a>
+  <h1 class="h4 mb-3">{{ it.name or 'Unnamed' }}</h1>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Material</div>
+        <div class="card-body">
+          <div><strong>Formula:</strong> {{ it.formula or '—' }}</div>
+          <div><strong>Surface type:</strong> {{ it.surf or it.surface or '—' }}</div>
+          <div><strong>Activity:</strong> {{ it.activity or '—' }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">Conditions</div>
+        <div class="card-body">
+          <div><strong>pH:</strong> {{ it.ph if it.ph is not none else '—' }}</div>
+          <div><strong>Temp (°C):</strong> {{ it.temp_c if it.temp_c is not none else '—' }}</div>
+          <div><strong>Substrate (mM):</strong>
+            min {{ it.substrate_min_mM or '—' }}, max {{ it.substrate_max_mM or '—' }}, const {{ it.substrate_const_mM or '—' }}
+          </div>
+          <div><strong>Catalyst (mg/mL):</strong> {{ it.catalyst_mg_per_mL or '—' }}</div>
+          <div><strong>Zeta (mV):</strong> {{ it.zeta_mV or it.Zpotential or '—' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">Kinetics</div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3"><strong>Km:</strong> {{ it.km if it.km is not none else '—' }}</div>
+            <div class="col-md-3"><strong>Vmax:</strong> {{ it.vmax if it.vmax is not none else '—' }}</div>
+            <div class="col-md-3"><strong>Kcat:</strong> {{ it.kcat if hasattr(it, 'kcat') else '—' }}</div>
+            <div class="col-md-3"><strong>IC50:</strong> {{ it.ic50 if hasattr(it, 'ic50') else '—' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if it.doi or it.link %}
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">Paper</div>
+        <div class="card-body">
+          <div><strong>DOI:</strong> {{ it.doi or '—' }}</div>
+          <div><a class="btn btn-outline-primary btn-sm" href="{{ it.link or ('https://doi.org/' ~ it.doi) }}" target="_blank" rel="noopener">Open source</a></div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">Notes</div>
+        <div class="card-body">
+          <pre class="mb-0" style="white-space: pre-wrap">{{ it.notes or '—' }}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

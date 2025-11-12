@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Detailed Prediction · nanozyme-lite{% endblock %}
+
+{% block content %}
+<section class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <h1 class="h3 mb-3">Detailed prediction (placeholder)</h1>
+      <p class="text-muted">This page will expose the full feature set once the production model is ready. Until then, use the explorative tier or contact us for manual studies.</p>
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <form>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="detail-activity">Activity</label>
+                <input class="form-control" id="detail-activity" placeholder="POD / SOD / ...">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="detail-formula">Formula</label>
+                <input class="form-control" id="detail-formula" placeholder="Fe3O4">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="detail-ph">pH</label>
+                <input class="form-control" id="detail-ph" placeholder="7.4">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="detail-temp">Temperature (°C)</label>
+                <input class="form-control" id="detail-temp" placeholder="25">
+              </div>
+            </div>
+            <button class="btn btn-secondary mt-4" type="button" disabled>Run mock prediction</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

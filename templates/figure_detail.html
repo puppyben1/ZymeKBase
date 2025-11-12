@@ -1,0 +1,23 @@
+<!-- D:\ruoyi\nami\nanozyme-lite-py312\templates\figure_detail.html -->
+{% extends 'base.html' %}
+{% block title %}图片详情 - {{ f.title }}{% endblock %}
+{% block content %}
+  <h3 style="margin-top:0;">{{ f.title }}</h3>
+  <div class="muted">标签：{{ f.tags or '—' }}</div>
+  <div class="muted">文件名：{{ f.filename }}</div>
+  <div style="margin:12px 0;">
+    <img src="{{ url_for('upload.uploaded_file', filename=f.filename) }}"
+         alt="{{ f.title }}" style="max-width:100%;height:auto;border-radius:8px;border:1px solid #eee;">
+  </div>
+
+  <p style="white-space:pre-wrap;line-height:1.6;">{{ f.description or '' }}</p>
+
+  <div style="display:flex; gap:10px; margin-top:12px;">
+    <a class="btn" href="{{ url_for('upload.uploaded_file', filename=f.filename) }}" download>下载原图</a>
+    <form method="post" action="{{ url_for('figure.delete', fid=f.id) }}"
+          onsubmit="return confirm('确认删除该图片？此操作不可恢复。');">
+      <button class="btn" type="submit">删除</button>
+    </form>
+    <a class="btn" href="{{ url_for('home.index') }}">返回首页</a>
+  </div>
+{% endblock %}

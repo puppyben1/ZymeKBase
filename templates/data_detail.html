@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block title %}{{ it.name }}{% endblock %}
+{% block content %}
+  <h3 style="margin-top:0;">{{ it.name }}</h3>
+  <p class="muted">底物：{{ it.substrate or '—' }}</p>
+  <p>Km：{{ it.km or '—' }} | Vmax：{{ it.vmax or '—' }}</p>
+  <pre style="white-space:pre-wrap; line-height:1.5;">{{ it.notes or '' }}</pre>
+{% endblock %}

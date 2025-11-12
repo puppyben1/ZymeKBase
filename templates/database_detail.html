@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Sample · nanozyme-lite{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h5 mb-0">Sample #{{ it.id }}</h1>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('database.list_view') }}">Back</a>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header fw-semibold">Material</div>
+        <div class="card-body">
+          <div><span class="text-muted">Name:</span> {{ it.name or '—' }}</div>
+          {% if it.substrate is not none %}<div><span class="text-muted">Substrate:</span> {{ it.substrate }}</div>{% endif %}
+          {% if it.formula is not none %}<div><span class="text-muted">Formula:</span> {{ it.formula }}</div>{% endif %}
+          {% if it.activity is not none %}<div><span class="text-muted">Activity:</span> {{ it.activity }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header fw-semibold">Conditions & Kinetics</div>
+        <div class="card-body">
+          {% if it.ph is not none %}<div><span class="text-muted">pH:</span> {{ it.ph }}</div>{% endif %}
+          {% if it.temp_c is not none %}<div><span class="text-muted">Temp (°C):</span> {{ it.temp_c }}</div>{% endif %}
+          <div><span class="text-muted">Km:</span> {{ it.km if it.km is not none else '—' }}</div>
+          <div><span class="text-muted">Vmax:</span> {{ it.vmax if it.vmax is not none else '—' }}</div>
+          {% if it.doi %}<div><span class="text-muted">DOI:</span> <a href="https://doi.org/{{ it.doi }}" target="_blank" rel="noopener">{{ it.doi }}</a></div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if it.notes %}
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header fw-semibold">Notes</div>
+        <div class="card-body">
+          <pre class="mb-0" style="white-space:pre-wrap">{{ it.notes }}</pre>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if it.created_at %}
+    <div class="col-12 text-end text-muted small">
+      Created at {{ it.created_at.strftime('%Y-%m-%d') }}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

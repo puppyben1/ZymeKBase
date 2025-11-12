@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Info · nanozyme-lite{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="h4 mb-3">Information</h1>
+  <p>Data sources, versioning, and known limitations.</p>
+  <h2 class="h6 mt-4">Changelog</h2>
+  {% if not changes %}
+    <p class="text-muted">No records.</p>
+  {% else %}
+    <ul class="list-group">
+      {% for c in changes %}
+      <li class="list-group-item">
+        <div class="small text-muted">{{ c.date }}</div>
+        <div class="fw-semibold">{{ c.version }}</div>
+        <div>{{ c.note }}</div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endblock %}

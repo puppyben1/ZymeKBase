@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% block title %}Visualization Tool · nanozyme-lite{% endblock %}
+
+{% block content %}
+<section class="container-fluid py-4">
+  <div class="row g-4">
+
+    <!-- Filters -->
+    <aside class="col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-header">
+          <strong>Filters</strong>
+        </div>
+        <div class="card-body">
+          <form id="vis-filter" method="get">
+            <div class="mb-3">
+              <label class="form-label" for="q">Keyword</label>
+              <input class="form-control" id="q" name="q" value="{{ request.args.get('q','') }}" placeholder="Formula / note">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="activity">Activity</label>
+              <input class="form-control" id="activity" name="activity" value="{{ request.args.get('activity','') }}" placeholder="POD">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="formula">Formula contains</label>
+              <input class="form-control" id="formula" name="formula" value="{{ request.args.get('formula','') }}" placeholder="Fe3O4">
+            </div>
+
+            <div class="row g-2">
+              <div class="col">
+                <label class="form-label" for="ph_min">pH min</label>
+                <input class="form-control" id="ph_min" name="ph_min" value="{{ request.args.get('ph_min','') }}">
+              </div>
+              <div class="col">
+                <label class="form-label" for="ph_max">pH max</label>
+                <input class="form-control" id="ph_max" name="ph_max" value="{{ request.args.get('ph_max','') }}">
+              </div>
+            </div>
+
+            <div class="row g-2 mt-2">
+              <div class="col">
+                <label class="form-label" for="temp_min">Temp min (°C)</label>
+                <input class="form-control" id="temp_min" name="temp_min" value="{{ request.args.get('temp_min','') }}">
+              </div>
+              <div class="col">
+                <label class="form-label" for="temp_max">Temp max (°C)</label>
+                <input class="form-control" id="temp_max" name="temp_max" value="{{ request.args.get('temp_max','') }}">
+              </div>
+            </div>
+
+            <div class="form-check mt-3">
+              <input class="form-check-input" type="checkbox" id="has_km" name="has_km" {% if request.args.get('has_km') %}checked{% endif %}>
+              <label class="form-check-label" for="has_km">Has Km</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="has_vmax" name="has_vmax" {% if request.args.get('has_vmax') %}checked{% endif %}>
+              <label class="form-check-label" for="has_vmax">Has Vmax</label>
+            </div>
+
+            <div class="mt-3">
+              <label class="form-label" for="feature">Scatter axis</label>
+              <select class="form-select" id="feature" name="feature">
+                {% for key, label in feature_options.items() %}
+                  <option value="{{ key }}" {% if key == selected_feature %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+              <button class="btn btn-primary" type="submit">Apply</button>
+              <a class="btn btn-outline-secondary" href="{{ url_for('visual2d.list_view') }}">Reset</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Charts -->
+    <div class="col-lg-9">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <div class="fw-semibold">Filtered samples: {{ record_count }} / {{ total }}</div>
+          <div class="text-muted small">Up to {{ max_points }} points rendered for responsiveness.</div>
+        </div>
+        <div class="badge bg-light text-dark text-wrap">log10(Km) driven insights</div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">
+          <strong>Scatter · log10(Km) vs {{ feature_options[selected_feature] }}</strong>
+        </div>
+        <div class="card-body">
+          <div id="chart-scatter" class="viz-chart"></div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-header">
+          <strong>Heatmap · |Correlation| across key variables</strong>
+        </div>
+        <div class="card-body">
+          <div id="chart-heatmap" class="viz-chart"></div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <strong>Violin · log10(Km) distribution by activity</strong>
+        </div>
+        <div class="card-body">
+          <div id="chart-violin" class="viz-chart"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script id="vis-data" type="application/json">{{ payload_json|safe }}</script>
+{% endblock %}
+
+{% block body_extra %}
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script>
+(function(){
+  const payloadEl = document.getElementById("vis-data");
+  const payload = payloadEl ? JSON.parse(payloadEl.textContent || "{}") : {};
+
+  function renderScatter(){
+    const data = payload.scatter || {x:[], y:[], text:[], color:[]};
+    const target = document.getElementById("chart-scatter");
+    if(!data.x || data.x.length === 0){
+      target.innerHTML = '<p class="text-muted mb-0">No points match the current filters.</p>';
+      return;
+    }
+    const trace = {
+      type: 'scattergl',
+      mode: 'markers',
+      x: data.x,
+      y: data.y,
+      text: data.text,
+      marker: { color: data.color, size: 9, opacity: 0.8 },
+      hovertemplate: '%{text}<extra></extra>'
+    };
+    Plotly.newPlot(target, [trace], {
+      margin: {t: 20, r: 20, b: 50, l: 60},
+      xaxis: { title: payload.feature_label || 'Feature' },
+      yaxis: { title: 'log10(Km)', zeroline: false },
+      hovermode: 'closest'
+    }, {responsive: true});
+  }
+
+  function renderHeatmap(){
+    const hm = payload.heatmap || {};
+    const target = document.getElementById("chart-heatmap");
+    if(!hm.matrix || hm.matrix.length === 0){
+      target.innerHTML = '<p class="text-muted mb-0">Not enough numeric coverage to compute correlations.</p>';
+      return;
+    }
+    const trace = {
+      type: 'heatmap',
+      z: hm.matrix,
+      x: hm.cols,
+      y: hm.cols,
+      colorscale: 'Viridis',
+      zmin: 0,
+      zmax: 1,
+    };
+    Plotly.newPlot(target, [trace], {
+      margin: {t: 30, r: 20, b: 50, l: 60},
+      xaxis: { title: '' },
+      yaxis: { title: '' },
+      hovermode: 'closest'
+    }, {responsive: true});
+  }
+
+  function renderViolin(){
+    const target = document.getElementById("chart-violin");
+    const series = (payload.violin || []).filter(v => v.values && v.values.length);
+    if(series.length === 0){
+      target.innerHTML = '<p class="text-muted mb-0">No Km values to plot.</p>';
+      return;
+    }
+    const traces = series.map(s => ({
+      type: 'violin',
+      name: s.activity || 'Unknown',
+      y: s.values,
+      box: {visible: false},
+      meanline: {visible: true},
+      points: 'all',
+      spanmode: 'hard'
+    }));
+    Plotly.newPlot(target, traces, {
+      margin: {t: 20, r: 20, b: 40, l: 60},
+      yaxis: { title: 'log10(Km)' },
+      legend: { orientation: 'h' }
+    }, {responsive: true});
+  }
+
+  renderScatter();
+  renderHeatmap();
+  renderViolin();
+})();
+</script>
+
+<style>
+  .viz-chart{
+    min-height: 320px;
+  }
+</style>
+{% endblock %}

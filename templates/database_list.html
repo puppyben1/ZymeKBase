@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Database · nanozyme-lite{% endblock %}
+
+{% block content %}
+<section class="container py-4">
+
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h5 mb-0">Database</h1>
+    <div class="text-muted small">Total (after filters): {{ total }}</div>
+  </div>
+
+  <!-- filters -->
+  <form id="filter-form" class="row g-2 mb-3" method="get" action="">
+    <div class="col-sm-3">
+      <input class="form-control" type="text" name="q" value="{{ request.args.get('q','') }}" placeholder="Keyword (name/substrate/notes)">
+    </div>
+
+    {% if flags.has_activity %}
+    <div class="col-sm-2">
+      <input class="form-control" type="text" name="activity" value="{{ request.args.get('activity','') }}" placeholder="Activity">
+    </div>
+    {% endif %}
+
+    {% if flags.has_formula %}
+    <div class="col-sm-2">
+      <input class="form-control" type="text" name="formula" value="{{ request.args.get('formula','') }}" placeholder="Formula contains">
+    </div>
+    {% endif %}
+
+    {% if flags.has_ph %}
+    <div class="col-sm-2">
+      <input class="form-control" type="text" name="ph_min" value="{{ request.args.get('ph_min','') }}" placeholder="pH ≥">
+    </div>
+    <div class="col-sm-2">
+      <input class="form-control" type="text" name="ph_max" value="{{ request.args.get('ph_max','') }}" placeholder="pH ≤">
+    </div>
+    {% endif %}
+
+    {% if flags.has_temp %}
+    <div class="col-sm-2">
+      <input class="form-control" type="text" name="temp_min" value="{{ request.args.get('temp_min','') }}" placeholder="Temp ≥ (°C)">
+    </div>
+    <div class="col-sm-2">
+      <input class="form-control" type="text" name="temp_max" value="{{ request.args.get('temp_max','') }}" placeholder="Temp ≤ (°C)">
+    </div>
+    {% endif %}
+
+    <div class="col-sm-2 form-check d-flex align-items-center gap-2">
+      <input class="form-check-input" type="checkbox" id="has_km" name="has_km" {% if request.args.get('has_km') %}checked{% endif %}>
+      <label class="form-check-label" for="has_km">has Km</label>
+    </div>
+    <div class="col-sm-2 form-check d-flex align-items-center gap-2">
+      <input class="form-check-input" type="checkbox" id="has_vmax" name="has_vmax" {% if request.args.get('has_vmax') %}checked{% endif %}>
+      <label class="form-check-label" for="has_vmax">has Vmax</label>
+    </div>
+
+    <div class="col-sm-2 d-grid">
+      <button class="btn btn-primary" type="submit">Apply</button>
+    </div>
+    <div class="col-sm-2 d-grid">
+      <a class="btn btn-outline-secondary" href="{{ url_for('database.list_view') }}">Reset</a>
+    </div>
+
+  </form>
+
+  <!-- table -->
+  <div class="table-responsive">
+    <table id="nano-table" class="table table-sm table-striped align-middle">
+      <thead>
+        <tr>
+          <th>ID</th>
+          {% if flags.has_formula %}<th>Formula</th>{% endif %}
+          {% if flags.has_activity %}<th>Activity</th>{% endif %}
+          {% if flags.has_ph %}<th>pH</th>{% endif %}
+          {% if flags.has_temp %}<th>Temp (°C)</th>{% endif %}
+          <th>Km</th>
+          <th>Vmax</th>
+          {% if flags.has_doi %}<th>DOI</th>{% endif %}
+          <th>View</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it in items %}
+        <tr>
+          <td>{{ it.id }}</td>
+          {% if flags.has_formula %}<td class="text-truncate" style="max-width: 200px;">{{ it.formula or '' }}</td>{% endif %}
+          {% if flags.has_activity %}<td>{{ it.activity or '' }}</td>{% endif %}
+          {% if flags.has_ph %}<td>{{ '%.3g'|format(it.ph) if it.ph is not none else '' }}</td>{% endif %}
+          {% if flags.has_temp %}<td>{{ '%.3g'|format(it.temp_c) if it.temp_c is not none else '' }}</td>{% endif %}
+          <td>{{ '%.5g'|format(it.km) if it.km is not none else '' }}</td>
+          <td>{{ '%.5g'|format(it.vmax) if it.vmax is not none else '' }}</td>
+          {% if flags.has_doi %}
+            <td>
+              {% if it.doi %}
+                <a href="{{ it.doi if it.doi.startswith('http') else ('https://doi.org/' ~ it.doi) }}" target="_blank" rel="noopener">Source</a>
+              {% endif %}
+            </td>
+          {% endif %}
+          <td><a class="btn btn-link btn-sm" href="{{ url_for('database.detail_view', item_id=it.id) }}">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</section>
+{% endblock %}
+
+{% block body_extra %}
+<!-- DataTables assets (scoped to this page) -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.5/css/jquery.dataTables.min.css">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.5/js/jquery.dataTables.min.js"></script>
+
+<script>
+(function(){
+  // init datatable
+  $('#nano-table').DataTable({
+    pageLength: 25,
+    lengthMenu: [10,25,50,100,250,500],
+    order: [], // keep server order
+    deferRender: true
+  });
+})();
+</script>
+{% endblock %}
